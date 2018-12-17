@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/ScottRudiger/test-circleci/issues"
   },
-  "homepage": "https://github.com/ScottRudiger/test-circleci#readme"
+  "homepage": "https://github.com/ScottRudiger/test-circleci#readme",
+  "devDependencies": {
+    "async-af": "^7.0.1"
+  }
 }

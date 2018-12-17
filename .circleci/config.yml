@@ -1,0 +1,58 @@
+version: 2
+
+defaults: &defaults
+  working_directory: ~/test-circleci
+  docker:
+    - image: circleci/node:latest
+
+jobs:
+  test:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package-lock.json" }}
+            - v1-dependencies-
+      - run:
+          name: installing dev dependencies...
+          command: npm ci
+      - save_cache:
+          key: v3-dependencies-{{ checksum "package-lock.json" }}
+          paths:
+              - node_modules
+      - persist_to_workspace:
+          root: ~/test-circleci
+          paths:
+            - ./circleci/*
+            - ./package.json
+            - ./package-lock.json
+            - ./node_modules/*
+  publish:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/test-circleci
+      - run:
+          name: authenticating with npm registry...
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+      - run:
+          name: publishing all packages...
+          command: npm publish --dry-run
+
+workflows:
+  version: 2
+  test-publish:
+    jobs:
+      - test:
+          filters:
+            tags:
+              only: /.*/
+      - publish:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+($|-prerelease\.\d+$)/
+            branches:
+                ignore: /.*/
